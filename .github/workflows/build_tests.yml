@@ -16,7 +16,7 @@ jobs:
         shell: bash -l {0}
     steps:
       - name: Setup repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniconda-version: latest
@@ -27,15 +27,15 @@ jobs:
         run: |
           conda config --set always_yes yes --set changeps1 no
           conda install -q -c conda-forge tox
-          conda create -q -n py37 python=3.7
           conda create -q -n py39 python=3.9
+          conda create -q -n py310 python=3.10
       - name: Run pytest
         env:
-          TOXENV: py37,py38,py39
+          TOXENV: py38,py39,py310
         run: |
-          export PY37_PATH=$CONDA/envs/py37/bin
           export PY39_PATH=$CONDA/envs/py39/bin
-          export PATH=$PATH:$PY37_PATH:$PY39_PATH
+          export PY310_PATH=$CONDA/envs/py310/bin
+          export PATH=$PATH:$PY39_PATH:$PY310_PATH
           tox
       - name: Run code checks
         if: ${{ matrix.os == 'ubuntu-latest' }}
