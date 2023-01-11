@@ -7,34 +7,35 @@ from setuptools import find_packages, setup
 
 # Core package components and metadata
 
-NAME = "genestboost"
+NAME = "tboost"
 EMAIL = "btcross26@yahoo.com"
 PACKAGES = find_packages()
 KEYWORDS = [""]
-DESCRIPTION = "General boosting framework for any regression estimator"
+DESCRIPTION = "General boosting framework for any regression estimator using pytorch"
 LONG = """
-:code:`genestboost` is an ML boosting library that separates the modeling algorithm from
-the boosting algorithm. The result is that you can boost any generic regression
-model, not just trees. Build a forward-thinking (forward-propagating) neural network if
-you wish, or build an ensemble of support vector machines if you would so desire. Mix
-and match link and loss functions at will.
+:code:`tboost` is an implementation of the :code:`genestboost` package using pytorch
+tensors rather than numpy arrays. This makes it easier to combine boosting with neural
+network concepts without having to constantly move arrays back and forth between
+:code:`numpy` and :code:`pytorch`. The fact that :code:`pytorch` is used also makes
+it possible to use GPUs for computations.
 """
 
 PROJECT_URLS = {
-    "Documentation": ("https://btcross26.github.io/genestboost/build/html/index.html"),
-    "Bug Tracker": "https://github.com/btcross26/genestboost/issues",
-    "Source Code": "https://github.com/btcross26/genestboost",
+    "Documentation": ("https://btcross26.github.io/tboost/build/html/index.html"),
+    "Bug Tracker": "https://github.com/btcross26/tboost/issues",
+    "Source Code": "https://github.com/btcross26/tboost",
 }
 
 CLASSIFIERS = [
     "Natural Language :: English",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
 ]
 
 INSTALL_REQUIRES = [
+    "torch==1.*,>=1.4.0",
     "numpy==1.*,>=1.18.5",
     "scipy==1.*,>=1.4.1",
 ]
@@ -72,7 +73,7 @@ EXTRAS_REQUIRE["dev"] = (
 
 
 HERE = Path(__file__).absolute().parent
-PACKAGE_INIT = HERE / "genestboost" / "__init__.py"
+PACKAGE_INIT = HERE / "tboost" / "__init__.py"
 VERSION = re.match(
     r".*__version__ *= *\"([\w\.-]+)*?\".*", PACKAGE_INIT.read_text(), re.DOTALL
 ).group(1)
@@ -95,7 +96,7 @@ def install_pkg():
         author_email=EMAIL,
         maintainer=AUTHORS[0],
         license=LICENSE,
-        python_requires=">=3.7.0,<3.10",
+        python_requires=">=3.8.0,<3.11",
         packages=PACKAGES,
         install_requires=INSTALL_REQUIRES,
         classifiers=CLASSIFIERS,
