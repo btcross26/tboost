@@ -12,7 +12,7 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
-from genestboost.weak_learners import SimplePLS
+from tboost.weak_learners import SimplePLS
 
 from .simple_pls_data import X, y
 

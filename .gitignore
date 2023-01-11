@@ -214,3 +214,6 @@ vignettes/*.pdf
 docs/.DS_Store
 
 .DS_Store
+
+.conda/
+.vscode/

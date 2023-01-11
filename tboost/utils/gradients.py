@@ -68,5 +68,5 @@ def d2_central_difference(
     np.ndarray
         The approximated values of the first derivative
     """
-    value = (func(y + h) - 2.0 * func(y) + func(y - h)) / (h ** 2)
+    value = (func(y + h) - 2.0 * func(y) + func(y - h)) / (h**2)
     return value

@@ -8,7 +8,7 @@ List of test params to import into link_function_tests.py
 
 import numpy as np
 
-from genestboost.link_functions import (
+from tboost.link_functions import (
     CLogLogLink,
     CubeRootLink,
     IdentityLink,
