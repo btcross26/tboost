@@ -161,7 +161,8 @@ def test_compute_weights(boosted_model_instance, weights_value):
 
 # test compute weights exception
 @pytest.mark.parametrize(
-    "weights_value", [1, 2, None, "None", "Newton", "error"],
+    "weights_value",
+    [1, 2, None, "None", "Newton", "error"],
 )
 def test_compute_weights_exception(boosted_model_instance, weights_value):
     """

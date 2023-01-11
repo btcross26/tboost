@@ -9,7 +9,7 @@ List of test params to import into loss_function_tests.py
 
 import numpy as np
 
-from genestboost.loss_functions import (
+from tboost.loss_functions import (
     AbsoluteLoss,
     LeastSquaresLoss,
     LogCoshLoss,

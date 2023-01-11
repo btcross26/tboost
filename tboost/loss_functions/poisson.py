@@ -34,4 +34,4 @@ class PoissonLoss(BaseLoss):
 
         Overrides BaseLoss.d2ldyp2.
         """
-        return yt / yp ** 2
+        return yt / yp**2

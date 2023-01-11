@@ -373,7 +373,10 @@ class BoostedModel:
         return eta_p
 
     def decision_function_single(
-        self, X: np.ndarray, model_index: int = -1, apply_learning_rate: bool = True,
+        self,
+        X: np.ndarray,
+        model_index: int = -1,
+        apply_learning_rate: bool = True,
     ) -> np.ndarray:
         """
         Compute the link for a specific ensemble model by index.

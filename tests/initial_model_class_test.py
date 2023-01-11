@@ -12,8 +12,8 @@ import logging
 import numpy as np
 import pytest
 
-from genestboost import BoostedModel
-from genestboost.link_functions import IdentityLink
+from tboost import BoostedModel
+from tboost.link_functions import IdentityLink
 
 from .weak_learners.simple_pls_data import X, y
 
@@ -22,7 +22,9 @@ LOGGER = logging.getLogger(__name__)
 
 # test init types
 @pytest.mark.parametrize(
-    "init_type", ["zero", "residuals", "mean"], ids=["zero", "residuals", "mean"],
+    "init_type",
+    ["zero", "residuals", "mean"],
+    ids=["zero", "residuals", "mean"],
 )
 def test_init_types(init_type):
     """

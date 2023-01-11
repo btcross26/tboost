@@ -49,4 +49,4 @@ class LogLoss(BaseLoss):
 
         Overrides BaseLoss.d2ldyp2.
         """
-        return (yt / (yp ** 2 + self._eps)) + (1.0 - yt) / ((1.0 - yp) ** 2 + self._eps)
+        return (yt / (yp**2 + self._eps)) + (1.0 - yt) / ((1.0 - yp) ** 2 + self._eps)

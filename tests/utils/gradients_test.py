@@ -9,7 +9,7 @@ Tests for functions in genestboost.utils gradients.py src file
 
 import numpy as np
 
-from genestboost.utils import d1_central_difference, d2_central_difference
+from tboost.utils import d1_central_difference, d2_central_difference
 
 
 # tests for central difference utils functions
@@ -19,14 +19,14 @@ class TestCentralDifferences:
         """
         Arbitrary polynomial function
         """
-        return 3.0 * y ** 3 - 4.0 * y ** 2 + 7.0 * y - 4.0
+        return 3.0 * y**3 - 4.0 * y**2 + 7.0 * y - 4.0
 
     @staticmethod
     def fp1(y):
         """
         First derivative of f
         """
-        return 9.0 * y ** 2 - 8.0 * y + 7.0
+        return 9.0 * y**2 - 8.0 * y + 7.0
 
     @staticmethod
     def fp2(y):
