@@ -8,7 +8,8 @@
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import numpy as np
+import torch
+from torch import tensor
 
 from .link_functions import BaseLink
 from .loss_functions import BaseLoss
@@ -148,14 +149,14 @@ class BoostedModel:
 
     def boost(
         self,
-        X: np.ndarray,
-        yt: np.ndarray,
-        yp: np.ndarray,
-        eta_p: np.ndarray,
+        X: tensor,
+        yt: tensor,
+        yp: tensor,
+        eta_p: tensor,
         model_callback: ModelCallback,
         model_callback_kwargs: Dict[str, Any],
-        weights: Optional[np.ndarray] = None,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        weights: Optional[tensor] = None,
+    ) -> Tuple[tensor, tensor]:
         """
         Boost by one model iteration.
 
@@ -168,18 +169,18 @@ class BoostedModel:
 
         Parameters
         ----------
-        X: np.ndarray
+        X: tensor
             The model matrix. If `init_type` was set as "residuals", then the model
             scores for which to calculate residuals should form the last column of the
             input matrix.
 
-        yt: np.ndarray
+        yt: tensor
             Observed target values.
 
-        yp: np.ndarray
+        yp: tensor
             Predicted target values.
 
-        eta_p: np.ndarray
+        eta_p: tensor
             The current link predictions corresponding to the model iteration. This can
             be found by transforming `yp`, but passing this as an argument avoids
             duplicate computations and improves performance.
@@ -190,14 +191,14 @@ class BoostedModel:
         model_callback_kwargs: dict, optional (default=None)
             A dictionary of keyword arguments to pass to `model_callback`.
 
-        weights: np.ndarray, optional (default=None)
+        weights: tensor, optional (default=None)
             Sample weights (by observation) to use for fitting. Should be positive.
             Observations with higher weights will affect the model fit more. If 'None',
             then all weights will be equal (1.0).
 
         Returns
         -------
-        yp_next, eta_p_next: tuple(np.ndarray, np.ndarray)
+        yp_next, eta_p_next: tuple(tensor, tensor)
             A tuple of the updated target predictions and target prediction links.
         """
         model_ = model_callback(**model_callback_kwargs)
@@ -211,58 +212,58 @@ class BoostedModel:
         self._model_list.append((model_, learning_rate))
         return yp_next, eta_p_next
 
-    def compute_link(self, yp: np.ndarray, inverse: bool = False) -> np.ndarray:
+    def compute_link(self, yp: tensor, inverse: bool = False) -> tensor:
         """Compute the element-wise link function or inverse link function.
 
         Parameters
         ----------
-        yt: np.ndarray
+        yt: tensor
             Observed target values.
 
-        yp: np.ndarray
+        yp: tensor
             Predicted target values.
 
         Returns
         -------
-        np.ndarray
+        tensor
         """
         return self._link(yp, inverse)
 
-    def compute_loss(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def compute_loss(self, yt: tensor, yp: tensor) -> tensor:
         """Compute element-wise loss.
 
         Parameters
         ----------
-        yt: np.ndarray
+        yt: tensor
             Observed target values.
 
-        yp: np.ndarray
+        yp: tensor
             Predicted target values.
 
         Returns
         -------
-        np.ndarray
+        tensor
         """
         return self._loss(yt, yp)
 
-    def compute_gradients(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def compute_gradients(self, yt: tensor, yp: tensor) -> tensor:
         """Compute element-wise gradients.
 
         Parameters
         ----------
-        yt: np.ndarray
+        yt: tensor
             Observed target values.
 
-        yp: np.ndarray
+        yp: tensor
             Predicted target values.
 
         Returns
         -------
-        np.ndarray
+        tensor
         """
         return self._loss.dldyp(yt, yp) * self._link.dydeta(yp)
 
-    def compute_newton_weights(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def compute_newton_weights(self, yt: tensor, yp: tensor) -> tensor:
         """
         Compute newton weights.
 
@@ -275,15 +276,15 @@ class BoostedModel:
 
         Parameters
         ----------
-        yt: np.ndarray
+        yt: tensor
             Observed target values.
 
-        yp: np.ndarray
+        yp: tensor
             Predicted target values.
 
         Returns
         -------
-        np.ndarray
+        tensor
             The element-wise reciprocal of the second-derivative of the loss function
             with respect to the link function.
         """
@@ -292,7 +293,7 @@ class BoostedModel:
         denominator = term_1 + term_2
         return 1.0 / denominator
 
-    def compute_weights(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def compute_weights(self, yt: tensor, yp: tensor) -> tensor:
         """
         Compute model weights that will be multiplied by observation gradients.
 
@@ -302,10 +303,10 @@ class BoostedModel:
 
         Parameters
         ----------
-        yt: np.ndarray
+        yt: tensor
             Observed target values.
 
-        yp: np.ndarray
+        yp: tensor
             Predicted target values.
         """
         if self.weights == "none":
@@ -321,7 +322,7 @@ class BoostedModel:
             "attribute:<weights> should be 'none', 'newton', or a callable"
         )
 
-    def compute_p_residuals(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def compute_p_residuals(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate pseudo-residuals.
 
@@ -330,29 +331,27 @@ class BoostedModel:
 
         Parameters
         ----------
-        yt: np.ndarray
+        yt: tensor
             Observed target values.
 
-        yp: np.ndarray
+        yp: tensor
             Predicted target values.
 
         Returns
         -------
-        np.ndarray
+        tensor
         """
         numerator = -self.compute_gradients(yt, yp)
         denominator = self.compute_weights(yt, yp)
         return numerator / denominator
 
-    def decision_function(
-        self, X: np.ndarray, model_index: Optional[int] = None
-    ) -> np.ndarray:
+    def decision_function(self, X: tensor, model_index: Optional[int] = None) -> tensor:
         """
         Get the link of computed model predictions.
 
         Parameters
         ----------
-        X: np.ndarray
+        X: tensor
             The model matrix. If `init_type` was set as "residuals", then the model
             scores for which to calculate residuals should form the last column of the
             input matrix.
@@ -364,7 +363,7 @@ class BoostedModel:
 
         Returns
         -------
-        np.ndarray
+        tensor
             The link of the computed model predictions.
         """
         eta_p = self._model_init.predict(X)
@@ -374,16 +373,16 @@ class BoostedModel:
 
     def decision_function_single(
         self,
-        X: np.ndarray,
+        X: tensor,
         model_index: int = -1,
         apply_learning_rate: bool = True,
-    ) -> np.ndarray:
+    ) -> tensor:
         """
         Compute the link for a specific ensemble model by index.
 
         Parameters
         ----------
-        X: np.ndarray
+        X: tensor
             The model matrix. If `init_type` was set as "residuals", then the model
             scores for which to calculate residuals should form the last column of the
             input matrix.
@@ -401,7 +400,7 @@ class BoostedModel:
 
         Returns
         -------
-        np.ndarray
+        tensor
             The computed link values for the selected model index.
         """
         model, lr = self._model_list[model_index]
@@ -411,10 +410,10 @@ class BoostedModel:
 
     def fit(
         self,
-        X: np.ndarray,
-        yt: np.ndarray,
+        X: tensor,
+        yt: tensor,
         iterations: int = 100,
-        weights: Optional[np.ndarray] = None,
+        weights: Optional[tensor] = None,
         min_iterations: Optional[int] = None,
     ) -> Model:
         """
@@ -422,7 +421,7 @@ class BoostedModel:
 
         Parameters
         ----------
-        X: np.ndarray
+        X: tensor
             The model matrix. If `init_type` was set as "residuals", then the model
             scores for which to calculate residuals should form the last column of the
             input matrix.
@@ -430,7 +429,7 @@ class BoostedModel:
         iterations: int (default=100)
             The maximum number of boosting iterations to perform.
 
-        weights: np.ndarray, optional (default=None)
+        weights: tensor, optional (default=None)
             Sample weights (by observation) to use for fitting. Should be positive.
             Observations with higher weights will affect the model fit more. If 'None',
             then all weights will be equal (1.0).
@@ -444,7 +443,7 @@ class BoostedModel:
         self
         """
         # compute weights if null and create modeling data sets
-        weights = np.ones_like(yt) if weights is None else weights
+        weights = torch.ones_like(yt) if weights is None else weights
         model_data = ModelDataSets(
             X,
             yt,
@@ -499,7 +498,7 @@ class BoostedModel:
 
         return self
 
-    def get_model_links(self, X: np.ndarray) -> np.ndarray:
+    def get_model_links(self, X: tensor) -> tensor:
         """
         Compute a matrix of model links (without applying learning rates).
 
@@ -508,17 +507,17 @@ class BoostedModel:
 
         Parameters
         ----------
-        X: np.ndarray [n_samples, n_features]
+        X: tensor [n_samples, n_features]
             The model matrix. If `init_type` was set as "residuals", then the model
             scores for which to calculate residuals should form the last column of the
             input matrix.
 
         Returns
         -------
-        link_matrix: np.ndarray [n_samples, n_boosting_iterations]
+        link_matrix: tensor [n_samples, n_boosting_iterations]
         """
-        model_links = np.zeros(
-            (X.shape[0], len(self._model_list) + 1), dtype=np.float64
+        model_links = torch.zeros(
+            X.shape[0], len(self._model_list) + 1, dtype=self.dtype
         )
         eta_p = self._model_init.predict(X)
         model_links[:, 0] = eta_p
@@ -527,25 +526,25 @@ class BoostedModel:
             model_links[:, i + 1] = eta_p
         return model_links
 
-    def get_loss_history(self) -> np.ndarray:
+    def get_loss_history(self) -> tensor:
         """
         Get the loss history for the fitted model (training and validation loss).
 
         Returns
         -------
-        np.ndarray
+        tensor
             A two-column array with with training and holdout loss in each column,
             respectively.
         """
-        return np.array(self._loss_list).astype(np.float)
+        return tensor(self._loss_list).type(self.dtype)
 
     def get_iterations(self) -> int:
         """Get the current number of model boosting iterations."""
         return len(self._model_list)
 
     def initialize_model(
-        self, X: np.ndarray, yt: np.ndarray, weights: Optional[np.ndarray] = None
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        self, X: tensor, yt: tensor, weights: Optional[tensor] = None
+    ) -> Tuple[tensor, tensor]:
         """
         Initialize the boosted model.
 
@@ -555,22 +554,22 @@ class BoostedModel:
 
         Parameters
         ----------
-        X: np.ndarray [n_samples, n_features]
+        X: tensor [n_samples, n_features]
             The model matrix. If `init_type` was set as "residuals", then the model
             scores for which to calculate residuals should form the last column of the
             input matrix.
 
-        yt: np.ndarray
+        yt: tensor
             Observed target values.
 
-        weights: np.ndarray, optional (default=None)
+        weights: tensor, optional (default=None)
             Sample weights (by observation) to use for fitting. Should be positive.
             Observations with higher weights will affect the model fit more. If 'None',
             then all weights will be equal (1.0).
 
         Returns
         -------
-        yp, eta_p: tuple(np.ndarray, np.ndarray)
+        yp, eta_p: tuple(tensor, tensor)
             The initial target predictions and link of target prediction arrays.
         """
         if not self._is_fit:
@@ -589,13 +588,13 @@ class BoostedModel:
 
         return yp, eta_p
 
-    def predict(self, X: np.ndarray, model_index: Optional[int] = None) -> np.ndarray:
+    def predict(self, X: tensor, model_index: Optional[int] = None) -> tensor:
         """
         Compute model predictions in the original target space.
 
         Parameters
         ----------
-        X: np.ndarray
+        X: tensor
             The model matrix. If `init_type` was set as "residuals", then the model
             scores for which to calculate residuals should form the last column of the
             input matrix.
@@ -607,12 +606,12 @@ class BoostedModel:
 
         Returns
         -------
-        predictions: np.ndarray
+        predictions: tensor
         """
         eta_p = self.decision_function(X, model_index)
         return self._link(eta_p, inverse=True)
 
-    def prediction_history(self, X: np.ndarray, links: bool = False) -> np.ndarray:
+    def prediction_history(self, X: tensor, links: bool = False) -> tensor:
         """
         Compute a prediction history.
 
@@ -621,7 +620,7 @@ class BoostedModel:
 
         Parameters
         ----------
-        X: np.ndarray
+        X: tensor
             The model matrix. If `init_type` was set as "residuals", then the model
             scores for which to calculate residuals should form the last column of the
             input matrix.
@@ -631,11 +630,11 @@ class BoostedModel:
             the non-transformed predictions.
         """
         model_links = self.get_model_links(X)
-        lr_array = np.hstack([[1], [tup[1] for tup in self._model_list]]).reshape(
-            (1, -1)
+        lr_array = torch.hstack([[1], [tup[1] for tup in self._model_list]]).reshape(
+            1, -1
         )
         model_links *= lr_array
-        link_history = np.cumsum(model_links, axis=1)
+        link_history = torch.cumsum(model_links, 1)
 
         if links is True:
             return link_history
@@ -652,7 +651,7 @@ class BoostedModel:
         self._is_fit = False
 
     def _compute_beta(
-        self, yt: np.ndarray, eta_p: np.ndarray, next_model_preds: np.ndarray
+        self, yt: tensor, eta_p: tensor, next_model_preds: tensor
     ) -> float:
         """
         Private method - learning rate switch statement.
@@ -671,7 +670,7 @@ class BoostedModel:
         raise AttributeError("init arg:<step_type> is mis-specified")
 
     def _line_search_best(
-        self, yt: np.ndarray, eta_p: np.ndarray, next_model_preds: np.ndarray
+        self, yt: tensor, eta_p: tensor, next_model_preds: tensor
     ) -> float:
         """Private method - determine the learning rate for the "best" `step_type`."""
         self._beta = self.alpha
@@ -679,7 +678,7 @@ class BoostedModel:
         return beta
 
     def _line_search_decaying(
-        self, yt: np.ndarray, eta_p: np.ndarray, next_model_preds: np.ndarray
+        self, yt: tensor, eta_p: tensor, next_model_preds: tensor
     ) -> float:
         """Private method - determine the learning rate for the "decaying" `step_type`."""
         beta0 = self._beta
@@ -701,8 +700,8 @@ class BoostedModel:
 
     def _track_loss(
         self,
-        yp_train: np.ndarray,
-        yp_val: Optional[np.ndarray],
+        yp_train: tensor,
+        yp_val: Optional[tensor],
         model_data: ModelDataSets,
     ) -> None:
         """
@@ -711,18 +710,18 @@ class BoostedModel:
         Implements the logic to track training and validation loss during the model
         fitting process.
         """
-        tloss = np.sum(
+        tloss = torch.sum(
             self._loss(model_data.yt_train, yp_train) * model_data.weights_train
-        ) / np.sum(model_data.weights_train)
+        ) / torch.sum(model_data.weights_train)
 
         if model_data.has_validation_set():
-            vloss = np.sum(
+            vloss = torch.sum(
                 self._loss(model_data.yt_val, yp_val)
                 * model_data.weights_val
-                / np.sum(model_data.weights_val)
+                / torch.sum(model_data.weights_val)
             )
         else:
-            vloss = np.nan
+            vloss = torch.nan
         self._loss_list.append((tloss, vloss))
 
     def _stop_model(self, model_data: ModelDataSets) -> bool:
@@ -763,23 +762,21 @@ class BoostedModel:
             self._init_type = init_type  # type: str
             self._value = 0.0  # type: float
 
-        def fit(
-            self, X: np.ndarray, yt: np.ndarray, weights: Optional[np.ndarray] = None
-        ) -> Model:
+        def fit(self, X: tensor, yt: tensor, weights: Optional[tensor] = None) -> Model:
             """
             Fit the InitialModel object.
 
             Parameters
             ----------
-            X: np.ndarray
+            X: tensor
                 The model matrix. If `init_type` was set as "residuals", then the model
                 scores for which to calculate residuals should form the last column of the
                 input matrix.
 
-            yt: np.ndarray
+            yt: tensor
                 Observed target values.
 
-            weights: np.ndarray, optional (default=None)
+            weights: tensor, optional (default=None)
                 Sample weights (by observation) to use for fitting. Should be positive.
                 Observations with higher weights will affect the model fit more. If 'None',
                 then all weights will be equal (1.0).
@@ -788,31 +785,31 @@ class BoostedModel:
             -------
             self
             """
-            weights = np.ones_like(yt) if weights is None else weights
+            weights = torch.ones_like(yt) if weights is None else weights
             if self._init_type in ["zero", "residuals"]:
                 self._value = 0.0
             elif self._init_type == "mean":
-                value = np.sum(yt * weights) / np.sum(weights)
+                value = torch.sum(yt * weights) / torch.sum(weights)
                 self._value = self._link(value)
             else:
                 raise AttributeError("init arg:<init_type> is mis-specified")
 
             return self
 
-        def predict(self, X: np.ndarray) -> np.ndarray:
+        def predict(self, X: tensor) -> tensor:
             """
             Compute InitialModel predictions.
 
             Parameters
             ----------
-            X: np.ndarray
+            X: tensor
                 The model matrix. If `init_type` was set as "residuals", then the model
                 scores for which to calculate residuals should form the last column of the
                 input matrix.
 
             Returns
             -------
-            predictions: np.ndarray
+            predictions: tensor
             """
             if self._init_type == "residuals":
                 return self._link(X[:, -1])
@@ -820,4 +817,4 @@ class BoostedModel:
             if self._init_type == "offset":
                 return self._value + X[:, -1]
 
-            return np.ones(X.shape[0]) * self._value
+            return torch.ones(X.shape[0]) * self._value
