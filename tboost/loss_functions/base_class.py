@@ -2,31 +2,31 @@
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-08-26
+# created: 2023-01-13
 
 from abc import ABC, abstractmethod
 
-import numpy as np
+from torch import tensor
 
 
 class BaseLoss(ABC):
     """Base class for loss functions."""
 
-    def __call__(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def __call__(self, yt: tensor, yp: tensor) -> tensor:
         """Call the instance object to calculate the loss function."""
         return self._loss(yt, yp)
 
     @abstractmethod
-    def _loss(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def _loss(self, yt: tensor, yp: tensor) -> tensor:
         """Calculate the per-observation loss as a function of `yt` and `yp`."""
         ...
 
     @abstractmethod
-    def dldyp(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def dldyp(self, yt: tensor, yp: tensor) -> tensor:
         """Calculate the first derivative of the loss with respect to `yp`."""
         pass
 
     @abstractmethod
-    def d2ldyp2(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def d2ldyp2(self, yt: tensor, yp: tensor) -> tensor:
         """Calculate the second derivative of the loss with respect to `yp`."""
         pass

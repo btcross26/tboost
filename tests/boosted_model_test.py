@@ -59,7 +59,7 @@ def test_compute_loss(boosted_model_instance):
     # THEN the link object attribute should have been called once
     with mock.patch.object(model, "_loss") as mock_loss:
         yp = torch.linspace(-100, 200, 1001)
-        yt = yp + torch.random.randn(*yp.shape)
+        yt = yp + torch.randn(*yp.shape)
         model.compute_loss(yt, yp)
 
         # assertions
@@ -80,7 +80,7 @@ def test_compute_gradients(boosted_model_instance):
         model, "_link"
     ) as mock_link:
         yp = torch.linspace(-100, 200, 1001)
-        yt = yp + torch.random.randn(*yp.shape)
+        yt = yp + torch.randn(*yp.shape)
         model.compute_gradients(yt, yp)
 
         # assertions

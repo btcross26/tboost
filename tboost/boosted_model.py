@@ -128,6 +128,7 @@ class BoostedModel:
         self.validation_stratify = validation_stratify
         self.validation_iter_stop = validation_iter_stop
         self.tol = tol
+        self.dtype = torch.float64
 
         # additional vars used during the fitting process
         self._beta: float = alpha

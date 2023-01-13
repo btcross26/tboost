@@ -7,13 +7,13 @@
 
 from abc import ABC, abstractmethod
 
-import numpy as np
+from torch import tensor
 
 
 class BaseLink(ABC):
     """Abstract base class for link functions."""
 
-    def __call__(self, y: np.ndarray, inverse: bool = False) -> np.ndarray:
+    def __call__(self, y: tensor, inverse: bool = False) -> tensor:
         """
         Call the instance object to calculate the link function.
 
@@ -26,21 +26,21 @@ class BaseLink(ABC):
         return self._link(y)
 
     @abstractmethod
-    def _link(self, y: np.ndarray) -> np.ndarray:
+    def _link(self, y: tensor) -> tensor:
         """Get the link, eta, as a function of y."""
         ...
 
     @abstractmethod
-    def _inverse_link(self, eta: np.ndarray) -> np.ndarray:
+    def _inverse_link(self, eta: tensor) -> tensor:
         """Get the target, y, as a function of the link, `eta`."""
         ...
 
     @abstractmethod
-    def dydeta(self, y: np.ndarray) -> np.ndarray:
+    def dydeta(self, y: tensor) -> tensor:
         """Get the derivative of `y` with respect to the link as a function of y."""
         ...
 
     @abstractmethod
-    def d2ydeta2(self, y: np.ndarray) -> np.ndarray:
+    def d2ydeta2(self, y: tensor) -> tensor:
         """Get the second derivative of `y` with respect to the link as a function of y."""
         ...
