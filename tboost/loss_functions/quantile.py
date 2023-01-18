@@ -44,7 +44,11 @@ class QuantileLoss(BaseLoss):
 
         Overrides BaseLoss.dldyp.
         """
-        return torch.where(yt - yp < 0, 1.0 - self.p_, -self.p_)
+        return torch.where(
+            yt - yp < 0,
+            tensor(1.0 - self.p_, dtype=yp.dtype),
+            tensor(-self.p_, dtype=yp.dtype),
+        )
 
     def d2ldyp2(self, yt: tensor, yp: tensor) -> tensor:
         """

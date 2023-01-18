@@ -29,7 +29,9 @@ class AbsoluteLoss(BaseLoss):
 
         Overrides BaseLoss.dldyp.
         """
-        return torch.where(yt - yp < 0, 1.0, -1.0)
+        return torch.where(
+            yt - yp < 0, tensor(1.0, dtype=yp.dtype), tensor(-1.0, dtype=torch.float32)
+        )
 
     def d2ldyp2(self, yt: tensor, yp: tensor) -> tensor:
         """

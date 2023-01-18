@@ -55,7 +55,11 @@ class QuasiLogLoss(BaseLoss):
         dims = tuple([1] * yp.ndim + [-1])
         x = torch.linspace(0.0, 1.0, self._d0_n + 1).reshape(dims)
         iwts = torch.hstack(
-            [[1.0], torch.tile([4.0, 2.0], (self._d0_n - 2) // 2), [4.0, 1.0]]
+            [
+                tensor([1.0]),
+                torch.tile(tensor([4.0, 2.0]), ((self._d0_n - 2) // 2,)),
+                tensor([4.0, 1.0]),
+            ]
         ).reshape(dims)
         ipts = torch.unsqueeze(yp, axis=-1) + torch.unsqueeze(yt - yp, axis=-1) * x
         values = torch.sum(

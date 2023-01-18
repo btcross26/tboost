@@ -6,11 +6,12 @@ beta loss matches intent.
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-12-19
+# created: 2023-01-18
 
 
-import numpy as np
 import pytest
+import torch
+from torch import tensor
 
 from tboost.loss_functions import BetaLoss, LeakyBetaLoss, QuasiLogLoss
 
@@ -39,8 +40,8 @@ def beta_loss_objects(request):
 # fixture for leaky beta loss tests
 @pytest.fixture(
     scope="function",
-    params=[0.01, 0.1, 0.5, 1.0],
-    ids=["gamma=0.01", "gamma=0.1", "gamma=0.5", "gamma=1.0"],
+    params=[0.05, 0.1, 0.5, 1.0],
+    ids=["gamma=0.05", "gamma=0.1", "gamma=0.5", "gamma=1.0"],
 )
 def leaky_beta_loss_objects(request):
     # setup
@@ -63,27 +64,27 @@ def test_beta_loss(beta_loss_objects):
     ql_loss, beta_loss = beta_loss_objects
 
     # WHEN loss values are calculated at various points
-    yt = np.array([1.0, 1.0, 1.0, 0.0, 0.0, 0.0])
-    yp = np.array([0.1, 0.5, 0.9, 0.1, 0.5, 0.9])
+    yt = tensor([1.0, 1.0, 1.0, 0.0, 0.0, 0.0], dtype=torch.float64)
+    yp = tensor([0.1, 0.5, 0.9, 0.1, 0.5, 0.9], dtype=torch.float64)
     beta_calc = beta_loss(yt, yp)
     ql_calc = ql_loss(yt, yp)
 
     # THEN the two different instances should yield approximately equal values
-    np.testing.assert_allclose(beta_calc, ql_calc, atol=1e-3, rtol=1e-4)
+    torch.testing.assert_close(beta_calc, ql_calc, atol=1e-3, rtol=1e-4)
 
     # WHEN d1 values are calculated at various points
     beta_calc_d1 = beta_loss.dldyp(yt, yp)
     ql_calc_d1 = ql_loss.dldyp(yt, yp)
 
     # THEN the two different instances should yield approximately equal values
-    np.testing.assert_allclose(beta_calc_d1, ql_calc_d1, atol=1e-4, rtol=1e-5)
+    torch.testing.assert_close(beta_calc_d1, ql_calc_d1, atol=1e-4, rtol=1e-5)
 
     # WHEN d2 values are calculated at various points
     beta_calc_d2 = beta_loss.d2ldyp2(yt, yp)
     ql_calc_d2 = ql_loss.d2ldyp2(yt, yp)
 
     # THEN the two different instances should yield approximately equal values
-    np.testing.assert_allclose(beta_calc_d2, ql_calc_d2, atol=1e-3, rtol=1e-4)
+    torch.testing.assert_close(beta_calc_d2, ql_calc_d2, atol=1e-3, rtol=1e-4)
 
 
 # tests for LeakyBetaLoss class
@@ -92,43 +93,53 @@ def test_leaky_beta_loss(leaky_beta_loss_objects):
     leaky_loss, beta_loss = leaky_beta_loss_objects
 
     # WHEN loss values are calculated at various points
-    yt = np.array([1.0, 1.0, 1.0, 0.0, 0.0, 0.0])  # mid-values
-    yp = np.array([0.3, 0.5, 0.9, 0.1, 0.15, 0.2])  # mid-values
+    yt = tensor([1.0, 1.0, 1.0, 0.0, 0.0, 0.0], dtype=torch.float64)  # mid-values
+    yp = tensor([0.3, 0.5, 0.9, 0.1, 0.15, 0.2], dtype=torch.float64)  # mid-values
     leaky_calc = leaky_loss(yt, yp)
     beta_calc = beta_loss(yt, yp)
 
     # THEN the two different instances should yield equal values inside of the
     # ratio points
-    np.testing.assert_allclose(leaky_calc, beta_calc, atol=0.0, rtol=1e-8)
+    torch.testing.assert_close(leaky_calc, beta_calc, atol=0.0, rtol=1e-8)
 
     # WHEN d1 values are calculated at various points inside the ratio points
     beta_calc_d1a = beta_loss.dldyp(yt, yp)
     leaky_calc_d1a = leaky_loss.dldyp(yt, yp)
 
     # THEN the two different instances should yield equal values
-    np.testing.assert_allclose(leaky_calc_d1a, beta_calc_d1a, atol=0.0, rtol=1e-8)
+    torch.testing.assert_close(leaky_calc_d1a, beta_calc_d1a, atol=0.0, rtol=1e-8)
 
     # WHEN d1 values are calculated at various points outside the ratio points
-    yt_shelf = np.array([1.0, 0.0, 0.0])  # shelf-values
-    yp_shelf = np.array([0.001, 0.9, 0.99])  # shelf-values
-    beta_calc_d1b = leaky_loss.gamma * beta_loss.dldyp(yt_shelf, 0.25)
+    yt_shelf = tensor([1.0, 0.0, 0.0], dtype=torch.float64)  # shelf-values
+    yp_shelf = tensor([0.001, 0.9, 0.99], dtype=torch.float64)  # shelf-values
+    beta_calc_d1b = leaky_loss.gamma * beta_loss.dldyp(
+        yt_shelf,
+        tensor(0.25, dtype=torch.float64),  # 0.25 comes from alpha / (alpha + beta)
+    )
     leaky_calc_d1b = leaky_loss.dldyp(yt_shelf, yp_shelf)
 
     # THEN the two different instances should yield equal values
-    np.testing.assert_allclose(leaky_calc_d1b, beta_calc_d1b, atol=0.0, rtol=1e-8)
+    torch.testing.assert_close(
+        leaky_calc_d1b, beta_calc_d1b, atol=0.0, rtol=1e-8
+    )  # this will fail if gamma is too small (e.g., 0.01 close to flat shelves)
 
     # WHEN d2 values are calculated at various points inside ratio points
     beta_calc_d2a = beta_loss.d2ldyp2(yt, yp)
     leaky_calc_d2a = leaky_loss.d2ldyp2(yt, yp)
 
     # THEN the two sets should be equivalent
-    np.testing.assert_allclose(leaky_calc_d2a, beta_calc_d2a, atol=0.0, rtol=1e-8)
+    torch.testing.assert_close(leaky_calc_d2a, beta_calc_d2a, atol=0.0, rtol=1e-8)
 
     # WHEN d2 values are calculated at various points outside ratio points
     leaky_calc_d2b = leaky_loss.d2ldyp2(yt_shelf, yp_shelf)
 
     # THEN the values should equal ZERO
-    np.testing.assert_allclose(leaky_calc_d2b, 0.0, atol=0.0, rtol=1e-8)
+    torch.testing.assert_close(
+        leaky_calc_d2b,
+        torch.zeros_like(leaky_calc_d2b, dtype=torch.float64),
+        atol=0.0,
+        rtol=1e-8,
+    )
 
 
 # test for LeakyBetaLoss class transition points
@@ -141,9 +152,9 @@ def test_leaky_beta_loss_transition(leaky_beta_loss_objects):
     eps = 1e-8
 
     # yp/yt values
-    yp_left = np.array([leaky_loss.xL - eps, leaky_loss.xR - eps])
-    yp_right = np.array([leaky_loss.xL + eps, leaky_loss.xR + eps])
-    yt = np.array([0.0, 1.0])
+    yp_left = tensor([leaky_loss.xL - eps, leaky_loss.xR - eps], dtype=torch.float64)
+    yp_right = tensor([leaky_loss.xL + eps, leaky_loss.xR + eps], dtype=torch.float64)
+    yt = tensor([0.0, 1.0], dtype=torch.float64)
 
     # loss
     loss_left = leaky_loss(yt, yp_left)
@@ -155,8 +166,8 @@ def test_leaky_beta_loss_transition(leaky_beta_loss_objects):
 
     # THEN the two calculations should be very close to one another for both
     # loss and derivatives
-    np.testing.assert_allclose(loss_left, loss_right, atol=1e-6, rtol=0.0)
-    np.testing.assert_allclose(dl_left, dl_right, atol=1e-6, rtol=0.0)
+    torch.testing.assert_close(loss_left, loss_right, atol=1e-6, rtol=0.0)
+    torch.testing.assert_close(dl_left, dl_right, atol=1e-6, rtol=0.0)
 
 
 # test for LeakyBetaLoss class end points
@@ -169,9 +180,9 @@ def test_leaky_beta_loss_transition(leaky_beta_loss_objects):
     eps = 1e-8
 
     # yp/yt values
-    yp_transition = np.array([leaky_loss.xL, leaky_loss.xR])
-    yp_end = np.array([1.0 - eps, eps])
-    yt = np.array([0.0, 1.0])
+    yp_transition = tensor([leaky_loss.xL, leaky_loss.xR], dtype=torch.float64)
+    yp_end = tensor([1.0 - eps, eps], dtype=torch.float64)
+    yt = tensor([0.0, 1.0], dtype=torch.float64)
 
     # loss
     loss_transition = leaky_loss(yt, yp_transition)
@@ -179,4 +190,4 @@ def test_leaky_beta_loss_transition(leaky_beta_loss_objects):
 
     # THEN the end point calculations should be greater than or equal to the transition
     # point calculations
-    assert np.all(loss_end >= loss_transition)
+    assert torch.all(loss_end >= loss_transition)

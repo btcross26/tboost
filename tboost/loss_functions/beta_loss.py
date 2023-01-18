@@ -5,6 +5,7 @@
 # created: 2023-01-18
 
 
+import math
 from typing import Callable
 
 import torch
@@ -71,7 +72,7 @@ class BetaLoss(BaseLoss):
 
         def vt_callback(yp: tensor) -> tensor:
             return torch.exp(
-                -torch.log(scale)
+                -math.log(scale)
                 + (1.0 - alpha) * torch.log(yp + eps)
                 + (1.0 - beta) * torch.log(1.0 - yp + eps)
             )
@@ -98,7 +99,7 @@ class BetaLoss(BaseLoss):
 
         Overrides BaseLoss.dldyp.
         """
-        return -(yt - yp) / self._vt_callback(yp)
+        return -(yt - yp) / self._vt_callback(tensor(yp))
 
     def d2ldyp2(self, yt: tensor, yp: tensor) -> tensor:
         """
@@ -155,9 +156,9 @@ class LeakyBetaLoss(BetaLoss):
 
         # find leaky point values
         self.rL = self.alpha / (self.alpha + self.beta)  # left x
-        self.vL = super().dldyp(0.0, self.rL)  # left slope
+        self.vL = super().dldyp(tensor(0.0), tensor(self.rL))  # left slope
         self.rR = 1.0 - self.rL  # right x
-        self.vR = super().dldyp(1.0, 1.0 - self.rR)  # right slope
+        self.vR = super().dldyp(tensor(1.0), tensor(1.0 - self.rR))  # right slope
 
         # leaky slopes
         self.mL = self.gamma * self.vL
@@ -166,11 +167,11 @@ class LeakyBetaLoss(BetaLoss):
         # transition pts
         floss = super().dldyp
         self.xL = bisect(
-            lambda x: floss(0.0, x) - self.mL, self.rL, 1.0 - 1e-8, xtol=xtol
+            lambda x: floss(tensor(0.0), x) - self.mL, self.rL, 1.0 - 1e-8, xtol=xtol
         )
         self.yL = super()._loss(0.0, self.xL)
         self.xR = bisect(
-            lambda x: floss(1.0, x) - self.mR, 1e-8, 1.0 - self.rR, xtol=xtol
+            lambda x: floss(tensor(1.0), x) - self.mR, 1e-8, 1.0 - self.rR, xtol=xtol
         )
         self.yR = super()._loss(1.0, self.xR)
 
