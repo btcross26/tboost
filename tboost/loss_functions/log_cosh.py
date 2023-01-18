@@ -2,9 +2,10 @@
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-08-26
+# created: 2023-01-18
 
-import numpy as np
+import torch
+from torch import tensor
 
 from .base_class import BaseLoss
 
@@ -12,26 +13,26 @@ from .base_class import BaseLoss
 class LogCoshLoss(BaseLoss):
     """Log cosh loss function class."""
 
-    def _loss(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def _loss(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the per-observation loss as a function of `yt` and `yp`.
 
         Overrides BaseLoss._loss.
         """
-        return np.log(np.cosh(yt - yp))
+        return torch.log(torch.cosh(yt - yp))
 
-    def dldyp(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def dldyp(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the first derivative of the loss with respect to `yp`.
 
         Overrides BaseLoss.dldyp.
         """
-        return -np.tanh(yt - yp)
+        return -torch.tanh(yt - yp)
 
-    def d2ldyp2(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def d2ldyp2(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the second derivative of the loss with respect to `yp`.
 
         Overrides BaseLoss.d2ldyp2.
         """
-        return 1.0 / np.cosh(yt - yp) ** 2
+        return 1.0 / torch.cosh(yt - yp) ** 2

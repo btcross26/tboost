@@ -1,8 +1,8 @@
-"""genestboost.loss_functions module."""
+"""tboost.loss_functions module."""
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-08-26
+# created: 2023-01-18
 
 
 from .absolute_value import AbsoluteLoss

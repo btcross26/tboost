@@ -2,11 +2,12 @@
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-08-26
+# created: 2023-01-18
 
 import warnings
 
-import numpy as np
+import torch
+from torch import tensor
 
 from .base_class import BaseLoss
 
@@ -14,23 +15,23 @@ from .base_class import BaseLoss
 class AbsoluteLoss(BaseLoss):
     """Absolute loss function class."""
 
-    def _loss(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def _loss(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the per-observation loss as a function of `yt` and `yp`.
 
         Overrides BaseLoss._loss.
         """
-        return np.abs(yt - yp)
+        return torch.abs(yt - yp)
 
-    def dldyp(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def dldyp(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the first derivative of the loss with respect to `yp`.
 
         Overrides BaseLoss.dldyp.
         """
-        return np.where(yt - yp < 0, 1, -1)
+        return torch.where(yt - yp < 0, 1.0, -1.0)
 
-    def d2ldyp2(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def d2ldyp2(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the second derivative of the loss with respect to `yp`.
 
@@ -39,4 +40,4 @@ class AbsoluteLoss(BaseLoss):
         warnings.warn(
             "second derivative of absolute value loss with respect to yp is zero"
         )
-        return np.zeros(yp.shape)
+        return torch.zeros(yp.shape, dtype=yp.dtype)

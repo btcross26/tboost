@@ -24,9 +24,9 @@ class BaseLoss(ABC):
     @abstractmethod
     def dldyp(self, yt: tensor, yp: tensor) -> tensor:
         """Calculate the first derivative of the loss with respect to `yp`."""
-        pass
+        ...
 
     @abstractmethod
     def d2ldyp2(self, yt: tensor, yp: tensor) -> tensor:
         """Calculate the second derivative of the loss with respect to `yp`."""
-        pass
+        ...

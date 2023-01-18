@@ -35,4 +35,4 @@ class LeastSquaresLoss(BaseLoss):
 
         Overrides BaseLoss.d2ldyp2.
         """
-        return torch.ones(*yp.shape)
+        return torch.ones(*yp.shape, dtype=yp.dtype)
