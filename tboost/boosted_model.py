@@ -791,7 +791,7 @@ class BoostedModel:
                 self._value = 0.0
             elif self._init_type == "mean":
                 value = torch.sum(yt * weights) / torch.sum(weights)
-                self._value = self._link(value)
+                self._value = self._link(value).item()
             else:
                 raise AttributeError("init arg:<init_type> is mis-specified")
 
