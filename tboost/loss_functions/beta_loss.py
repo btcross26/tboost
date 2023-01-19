@@ -1,16 +1,18 @@
-"""Least squares loss function implementation."""
+"""Beta loss function implementation."""
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-11-03
+# created: 2023-01-18
 
 
+import math
 from typing import Callable
 
-import numpy as np
+import torch
 from scipy.optimize import bisect
 from scipy.special import beta as beta_function
 from scipy.special import betainc
+from torch import tensor
 
 from . import BaseLoss
 
@@ -45,7 +47,7 @@ class BetaLoss(BaseLoss):
     @staticmethod
     def beta_callback(
         alpha: float, beta: float, eps: float = 1e-10
-    ) -> Callable[[np.ndarray], np.ndarray]:
+    ) -> Callable[[tensor], tensor]:
         """
         Compute the beta callback function for quasi-deviance.
 
@@ -63,21 +65,21 @@ class BetaLoss(BaseLoss):
         Returns
         -------
         callable
-            A callable that takes an np.ndarray and returns an np.ndarray after
+            A callable that takes an tensor and returns an tensor after
             calculating the beta quasi-deviance denominator
         """
         scale = 1.0 / beta_function(alpha, beta)
 
-        def vt_callback(yp: np.ndarray) -> np.ndarray:
-            return np.exp(
-                -np.log(scale)
-                + (1.0 - alpha) * np.log(yp + eps)
-                + (1.0 - beta) * np.log(1.0 - yp + eps)
+        def vt_callback(yp: tensor) -> tensor:
+            return torch.exp(
+                -math.log(scale)
+                + (1.0 - alpha) * torch.log(yp + eps)
+                + (1.0 - beta) * torch.log(1.0 - yp + eps)
             )
 
         return vt_callback
 
-    def _loss(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def _loss(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the per-observation loss as a function of `yt` and `yp`.
 
@@ -91,15 +93,15 @@ class BetaLoss(BaseLoss):
         b2 = beta_function(self.alpha + 1, self.beta)
         return (yt * c1 * b1 - c2 * b2) * self.scale
 
-    def dldyp(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def dldyp(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the first derivative of the loss with respect to `yp`.
 
         Overrides BaseLoss.dldyp.
         """
-        return -(yt - yp) / self._vt_callback(yp)
+        return -(yt - yp) / self._vt_callback(tensor(yp))
 
-    def d2ldyp2(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def d2ldyp2(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the second derivative of the loss with respect to `yp`.
 
@@ -154,9 +156,9 @@ class LeakyBetaLoss(BetaLoss):
 
         # find leaky point values
         self.rL = self.alpha / (self.alpha + self.beta)  # left x
-        self.vL = super().dldyp(0.0, self.rL)  # left slope
+        self.vL = super().dldyp(tensor(0.0), tensor(self.rL))  # left slope
         self.rR = 1.0 - self.rL  # right x
-        self.vR = super().dldyp(1.0, 1.0 - self.rR)  # right slope
+        self.vR = super().dldyp(tensor(1.0), tensor(1.0 - self.rR))  # right slope
 
         # leaky slopes
         self.mL = self.gamma * self.vL
@@ -165,25 +167,25 @@ class LeakyBetaLoss(BetaLoss):
         # transition pts
         floss = super().dldyp
         self.xL = bisect(
-            lambda x: floss(0.0, x) - self.mL, self.rL, 1.0 - 1e-8, xtol=xtol
+            lambda x: floss(tensor(0.0), x) - self.mL, self.rL, 1.0 - 1e-8, xtol=xtol
         )
         self.yL = super()._loss(0.0, self.xL)
         self.xR = bisect(
-            lambda x: floss(1.0, x) - self.mR, 1e-8, 1.0 - self.rR, xtol=xtol
+            lambda x: floss(tensor(1.0), x) - self.mR, 1e-8, 1.0 - self.rR, xtol=xtol
         )
         self.yR = super()._loss(1.0, self.xR)
 
-    def _loss(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def _loss(self, yt: tensor, yp: tensor) -> tensor:
         # calculate loss function values from regular betaloss
         values = super()._loss(yt, yp)
 
         # modify left shelf
-        values = np.where(
+        values = torch.where(
             yt - yp < -self.xL, self.yL - self.mL * (-yp + self.xL), values
         )
 
         # modify right shelf
-        values = np.where(
+        values = torch.where(
             yt - yp > 1.0 - self.xR,
             self.yR - self.mR * (yt - yp - 1.0 + self.xR),
             values,
@@ -191,7 +193,7 @@ class LeakyBetaLoss(BetaLoss):
 
         return values
 
-    def dldyp(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def dldyp(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the first derivative of the loss with respect to `yp`.
 
@@ -201,14 +203,14 @@ class LeakyBetaLoss(BetaLoss):
         values = super().dldyp(yt, yp)
 
         # modify left shelf
-        values = np.where(yt - yp < -self.xL, self.mL, values)
+        values = torch.where(yt - yp < -self.xL, self.mL, values)
 
         # modify right shelf
-        values = np.where(yt - yp > 1.0 - self.xR, self.mR, values)
+        values = torch.where(yt - yp > 1.0 - self.xR, self.mR, values)
 
         return values
 
-    def d2ldyp2(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def d2ldyp2(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the second derivative of the loss with respect to `yp`.
 
@@ -218,6 +220,8 @@ class LeakyBetaLoss(BetaLoss):
         values = super().d2ldyp2(yt, yp)
 
         # modify shelves with 0.0 second derivative
-        values = np.where((yt - yp < -self.xL) | (yt - yp > 1.0 - self.xR), 0.0, values)
+        values = torch.where(
+            (yt - yp < -self.xL) | (yt - yp > 1.0 - self.xR), 0.0, values
+        )
 
         return values

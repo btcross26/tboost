@@ -2,13 +2,14 @@
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-08-28
+# created: 2023-01-18
 
 
 import heapq
 from typing import List, Optional, Tuple
 
-import numpy as np
+import torch
+from torch import tensor
 
 from ..type_hints import Model
 
@@ -51,20 +52,18 @@ class SimplePLS:
         self._filter_threshold = 0.0 if filter_threshold is None else filter_threshold
 
         # public attributes initialized during class usage
-        self.coef_: np.ndarray
+        self.coef_: tensor
         self.intercept_: float
 
         # private attributes initialized during class usage
-        self._X_means: np.ndarray
-        self._X_std: np.ndarray
+        self._X_means: tensor
+        self._X_std: tensor
         self._y_mean: float
         self._y_std: float
         self._multiplier: float
         self._pls_intercept: float
 
-    def fit(
-        self, X: np.ndarray, y: np.ndarray, weights: Optional[np.ndarray] = None
-    ) -> Model:
+    def fit(self, X: tensor, y: tensor, weights: Optional[tensor] = None) -> Model:
         """
         Fit a linear regression according to the specified initializer arguments.
 
@@ -96,8 +95,10 @@ class SimplePLS:
         Xs, ys = self._initialize_model(X, y)
 
         # calculate initial model coefficients
-        weights = np.ones(y.shape[0]) if weights is None else weights
-        coefs = np.sum(Xs * (ys * weights).reshape((-1, 1)), axis=0) / np.sum(weights)
+        weights = torch.ones(y.shape[0], dtype=y.dtype) if weights is None else weights
+        coefs = torch.sum(Xs * (ys * weights).reshape((-1, 1)), dim=0) / torch.sum(
+            weights
+        )
 
         # mask/filter coefficients
         coefs = self._mask_coefs(coefs)
@@ -111,13 +112,13 @@ class SimplePLS:
         # get intercept
         self.intercept_ = (
             self._y_mean
-            - np.sum(coefs * self._X_means[0])
+            - torch.sum(coefs * self._X_means[0]).item()
             - self._pls_intercept * self._y_std
         )
 
         return self
 
-    def predict(self, X: np.ndarray) -> np.ndarray:
+    def predict(self, X: tensor) -> tensor:
         """
         Compute model predictions for the given model matrix, X.
 
@@ -133,11 +134,9 @@ class SimplePLS:
         numpy.ndarray, shape (n_samples, )
             A vector of predictions of dtype float
         """
-        return self.intercept_ + X.dot(self.coef_)
+        return self.intercept_ + torch.matmul(X, self.coef_)
 
-    def _get_coef_multiplier(
-        self, coefs: np.ndarray, Xs: np.ndarray, ys: np.ndarray
-    ) -> np.ndarray:
+    def _get_coef_multiplier(self, coefs: tensor, Xs: tensor, ys: tensor) -> tensor:
         """
         Get the coefficient multiplier that is applied to the coefficients (private).
 
@@ -172,23 +171,27 @@ class SimplePLS:
         # initialize values
         self._pls_intercept = 0.0
         multiplier = 1.0
-        n_coefs = np.sum(coefs != 0.0)
+        n_coefs = torch.sum(coefs != 0.0).item()
 
         # regress on weighted (by correlation coefficient) sum if max_vars is greater
         # than 1
         if n_coefs != 1:
-            x_pls = Xs.dot(coefs)
+            x_pls = torch.matmul(Xs, coefs)
             x_pls_mean = x_pls.mean()
-            x_pls_std = x_pls.std()
-            x_pls_std = np.where(x_pls_std == 0.0, 1.0, x_pls_std)
+            x_pls_std = x_pls.std(unbiased=False)
+            x_pls_std = torch.where(
+                x_pls_std == 0.0,
+                tensor(1.0, dtype=x_pls_std.dtype),
+                x_pls_std,
+            )
             x_pls_scaled = (x_pls - x_pls_mean) / x_pls_std
-            alpha = np.mean(x_pls_scaled * ys)
-            self._pls_intercept = alpha * x_pls_mean / x_pls_std
-            multiplier = alpha / x_pls_std
+            alpha = torch.mean(x_pls_scaled * ys).item()
+            self._pls_intercept = (alpha * x_pls_mean / x_pls_std).item()
+            multiplier = (alpha / x_pls_std).item()
 
         return multiplier
 
-    def _mask_coefs(self, coefs: np.ndarray) -> np.ndarray:
+    def _mask_coefs(self, coefs: tensor) -> tensor:
         """
         Apply initializer arguments max_vars and filter_threshold (private).
 
@@ -212,12 +215,12 @@ class SimplePLS:
             down according to the specified filter_threshold.
         """
         # initialize values
-        coefs_abs = np.abs(coefs)
-        max_index = np.argmax(coefs_abs)
+        coefs_abs = torch.abs(coefs)
+        max_index = torch.argmax(coefs_abs)
 
         # edge case where there will only be one var
         if self._max_vars == 1 or self._filter_threshold >= 1.0:
-            coef_mask = np.zeros(coefs.shape[0])
+            coef_mask = torch.zeros(coefs.shape[0], dtype=coefs.dtype)
             coef_mask[max_index] = 1.0
             return coefs * coef_mask
 
@@ -241,7 +244,7 @@ class SimplePLS:
         # apply max_vars intermediate case if specified
         if coef_mask.sum() > num_vars:
             heap_index = list()  # type: List[Tuple[float, int]]
-            for i in np.nonzero(coef_mask == 1)[0]:
+            for i in torch.nonzero(coef_mask == 1).squeeze():
                 value = rel_coefs[i]
                 if len(heap_index) < num_vars:
                     heapq.heappush(heap_index, (value, i))
@@ -251,13 +254,13 @@ class SimplePLS:
                         heapq.heappush(heap_index, (value, i))
                     else:
                         heapq.heappush(heap_index, min_heap_tuple)
-            mask_index = list(map(lambda x: x[1], heap_index))
-            coef_mask = np.zeros(coefs.shape[0])
+            mask_index = tensor(list(map(lambda x: x[1], heap_index)))
+            coef_mask = torch.zeros(coefs.shape[0], dtype=coefs.dtype)
             coef_mask[mask_index] = 1.0
 
         return coef_mask * coefs
 
-    def _initialize_model(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+    def _initialize_model(self, X: tensor, y: tensor) -> tensor:
         """
         Initialize the model by standardizing the X and y fitting arrays (private).
 
@@ -278,10 +281,12 @@ class SimplePLS:
         ys: numpy.ndarray, shape (n_samples, )
             The standardized version of target vector, y, that is being fitted
         """
-        self._X_means = X.mean(axis=0, keepdims=True)
-        self._X_std = X.std(axis=0, keepdims=True)
-        self._X_std = np.where(self._X_std == 0, 1.0, self._X_std)
-        self._y_mean = y.mean()
-        self._y_std = y.std()
+        self._X_means = X.mean(dim=0, keepdim=True)
+        self._X_std = X.std(dim=0, unbiased=False, keepdim=True)
+        self._X_std = torch.where(
+            self._X_std == 0, tensor(1.0, dtype=self._X_std.dtype), self._X_std
+        )
+        self._y_mean = y.mean().item()
+        self._y_std = y.std(unbiased=False).item()
         self._y_std = 1.0 if self._y_std == 0.0 else self._y_std
         return (X - self._X_means) / self._X_std, (y - self._y_mean) / self._y_std

@@ -9,8 +9,9 @@ Unit tests for boosted_model class
 import logging
 from unittest import mock
 
-import numpy as np
 import pytest
+import torch
+from torch import tensor
 
 LOGGER = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ def test_compute_link(boosted_model_instance):
     # WHEN the instance link is mocked and compute_link called
     # THEN the link object attribute should have been called once
     with mock.patch.object(model, "_link") as mock_link:
-        y = np.linspace(-100, 200, 1001)
+        y = torch.linspace(-100, 200, 1001)
         model.compute_link(y)
 
         # assertions
@@ -57,8 +58,8 @@ def test_compute_loss(boosted_model_instance):
     # WHEN the instance link is mocked and compute_link called
     # THEN the link object attribute should have been called once
     with mock.patch.object(model, "_loss") as mock_loss:
-        yp = np.linspace(-100, 200, 1001)
-        yt = yp + np.random.randn(*yp.shape)
+        yp = torch.linspace(-100, 200, 1001)
+        yt = yp + torch.randn(*yp.shape)
         model.compute_loss(yt, yp)
 
         # assertions
@@ -78,8 +79,8 @@ def test_compute_gradients(boosted_model_instance):
     with mock.patch.object(model, "_loss") as mock_loss, mock.patch.object(
         model, "_link"
     ) as mock_link:
-        yp = np.linspace(-100, 200, 1001)
-        yt = yp + np.random.randn(*yp.shape)
+        yp = torch.linspace(-100, 200, 1001)
+        yt = yp + torch.randn(*yp.shape)
         model.compute_gradients(yt, yp)
 
         # assertions
@@ -100,8 +101,8 @@ def test_compute_newton_weights_1(boosted_model_instance):
     with mock.patch.object(model, "_loss") as mock_loss, mock.patch.object(
         model, "_link"
     ) as mock_link:
-        yp = np.linspace(-100, 200, 1001)
-        yt = yp + np.random.randn(*yp.shape)
+        yp = torch.linspace(-100, 200, 1001)
+        yt = yp + torch.randn(*yp.shape)
         model.compute_newton_weights(yt, yp)
 
         # assertions
@@ -120,12 +121,12 @@ def test_compute_newton_weights_2(boosted_model_instance):
     model = boosted_model_instance
 
     # WHEN the Identity/Least Squares link combo is called
-    yp = np.linspace(-100, 200, 1001)
-    yt = yp + np.random.randn(*yp.shape)
+    yp = torch.linspace(-100, 200, 1001)
+    yt = yp + torch.randn(*yp.shape)
     weights = model.compute_newton_weights(yt, yp)
 
     # THEN all newton weights should be equal to 1.0
-    np.all(weights == 1.0)
+    torch.all(weights == 1.0)
 
 
 # test compute weights
@@ -146,8 +147,8 @@ def test_compute_weights(boosted_model_instance, weights_value):
     with mock.patch.object(model, "weights", weights_value), mock.patch.object(
         model, "compute_newton_weights"
     ) as mock_cnw:
-        yp = np.linspace(-100, 200, 1001)
-        yt = yp + np.random.randn(*yp.shape)
+        yp = torch.linspace(-100, 200, 1001)
+        yt = yp + torch.randn(*yp.shape)
         weights = model.compute_weights(yt, yp)
 
         # assertions
@@ -176,8 +177,8 @@ def test_compute_weights_exception(boosted_model_instance, weights_value):
     with mock.patch.object(model, "weights", weights_value), mock.patch.object(
         model, "compute_newton_weights"
     ) as mock_cnw:
-        yp = np.linspace(-100, 200, 1001)
-        yt = yp + np.random.randn(*yp.shape)
+        yp = torch.linspace(-100, 200, 1001)
+        yt = yp + torch.randn(*yp.shape)
         with pytest.raises(AttributeError) as excinfo:
             weights = model.compute_weights(yt, yp)
     assert (

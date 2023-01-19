@@ -4,10 +4,10 @@ Tests for functions in genestboost.utils gradients.py src file
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-12-16
+# created: 2023-01-14
 
 
-import numpy as np
+import torch
 
 from tboost.utils import d1_central_difference, d2_central_difference
 
@@ -40,7 +40,9 @@ class TestCentralDifferences:
         Test first-order first derivative utils function
         """
         # GIVEN a simple polynomial function, derivatives, and evaluation locations
-        y = np.linspace(2, 12, 101)
+        y = torch.linspace(2, 12, 101).type(
+            torch.float64
+        )  # needs to be float64 for tests
 
         # WHEN the first order central difference is used to approximate derivatives
         expected_values_d1 = self.fp1(y)
@@ -49,10 +51,10 @@ class TestCentralDifferences:
         calculated_values_d2 = d1_central_difference(self.fp1, y, 1e-8)
 
         # THEN calculate values should be reasonable close to exact values
-        np.testing.assert_allclose(
+        torch.testing.assert_close(
             calculated_values_d1, expected_values_d1, atol=0.0, rtol=1e-3
         )
-        np.testing.assert_allclose(
+        torch.testing.assert_close(
             calculated_values_d2, expected_values_d2, atol=0.0, rtol=1e-3
         )
 
@@ -61,13 +63,15 @@ class TestCentralDifferences:
         Test first-order second derivative utils function
         """
         # GIVEN a simple polynomial function, derivatives, and evaluation locations
-        y = np.linspace(2, 12, 101)
+        y = torch.linspace(2, 12, 101).type(
+            torch.float64
+        )  # needs to be float64 for tests
 
         # WHEN the first order central difference is used to approximate 2nd derivatives
         expected_values_d2 = self.fp2(y)
         calculated_values_d2 = d2_central_difference(self.f, y, 1e-6)
 
         # THEN calculate values should be reasonable close to exact values
-        np.testing.assert_allclose(
+        torch.testing.assert_close(
             calculated_values_d2, expected_values_d2, atol=0.0, rtol=1e-2
         )

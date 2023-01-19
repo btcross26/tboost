@@ -4,13 +4,14 @@ Unit tests for BoostedModel.InitialModel class
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2020-04-06
+# created: 2023-01-18
 
 
 import logging
 
 import numpy as np
 import pytest
+from torch import tensor
 
 from tboost import BoostedModel
 from tboost.link_functions import IdentityLink
@@ -41,7 +42,7 @@ def test_init_types(init_type):
     if init_type in ["zero", "residuals"]:
         assert model._value == 0.0
     elif init_type == "mean":
-        assert model._value == model._link(np.mean(y))
+        assert model._value == model._link(y.mean())
 
 
 # test initial model exception
