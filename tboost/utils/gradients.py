@@ -6,17 +6,17 @@ Uses central differences for use in testing and numerical derivatives
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-12-16
+# created: 2023-01-14
 
 
 from typing import Callable
 
-import numpy as np
+from torch import tensor
 
 
 def d1_central_difference(
-    func: Callable[[np.ndarray], np.ndarray], y: np.ndarray, h: float = 1e-8
-) -> np.ndarray:
+    func: Callable[[tensor], tensor], y: tensor, h: float = 1e-10
+) -> tensor:
     """
     Approximate the first derivative of func at y.
 
@@ -27,7 +27,7 @@ def d1_central_difference(
     func: callable
         Function that takes y as an argument and returns a value
 
-    y: np.ndarray
+    y: tensor
         Locations to calculate the value of func
 
     h: float
@@ -36,7 +36,7 @@ def d1_central_difference(
 
     Returns
     -------
-    np.ndarray
+    tensor
         The approximated values of the first derivative
     """
     value = (func(y + h) - func(y - h)) / (2.0 * h)
@@ -44,8 +44,8 @@ def d1_central_difference(
 
 
 def d2_central_difference(
-    func: Callable[[np.ndarray], np.ndarray], y: np.ndarray, h: float = 1e-8
-) -> np.ndarray:
+    func: Callable[[tensor], tensor], y: tensor, h: float = 1e-8
+) -> tensor:
     """
     Approximate the first derivative of func at y.
 
@@ -56,7 +56,7 @@ def d2_central_difference(
     func: callable
         Function that takes y as an argument and returns a value
 
-    y: np.ndarray
+    y: tensor
         Locations to calculate the value of func
 
     h: float
@@ -65,8 +65,8 @@ def d2_central_difference(
 
     Returns
     -------
-    np.ndarray
+    tensor
         The approximated values of the first derivative
     """
-    value = (func(y + h) - 2.0 * func(y) + func(y - h)) / (h ** 2)
+    value = (func(y + h) - 2.0 * func(y) + func(y - h)) / (h**2)
     return value

@@ -2,11 +2,12 @@
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-08-27
+# created: 2023-01-18
 
 import warnings
 
-import numpy as np
+import torch
+from torch import tensor
 
 from .base_class import BaseLoss
 
@@ -28,24 +29,28 @@ class QuantileLoss(BaseLoss):
         super().__init__()
         self.p_ = p
 
-    def _loss(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def _loss(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the per-observation loss as a function of `yt` and `yp`.
 
         Overrides BaseLoss._loss.
         """
-        multiplier = np.where(yt - yp < 0, 1.0 - self.p_, self.p_)
-        return np.abs(yt - yp) * multiplier
+        multiplier = torch.where(yt - yp < 0, 1.0 - self.p_, self.p_)
+        return torch.abs(yt - yp) * multiplier
 
-    def dldyp(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def dldyp(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the first derivative of the loss with respect to `yp`.
 
         Overrides BaseLoss.dldyp.
         """
-        return np.where(yt - yp < 0, 1.0 - self.p_, -self.p_)
+        return torch.where(
+            yt - yp < 0,
+            tensor(1.0 - self.p_, dtype=yp.dtype),
+            tensor(-self.p_, dtype=yp.dtype),
+        )
 
-    def d2ldyp2(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def d2ldyp2(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the second derivative of the loss with respect to `yp`.
 
@@ -54,4 +59,4 @@ class QuantileLoss(BaseLoss):
         warnings.warn(
             "second derivative of quantile value loss with respect to yp is zero"
         )
-        return np.zeros(yp.shape)
+        return torch.zeros(yp.shape, dtype=yp.dtype)

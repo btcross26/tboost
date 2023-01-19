@@ -2,10 +2,11 @@
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-08-26
+# created: 2023-01-14
 
 
-import numpy as np
+import torch
+from torch import tensor
 
 from .base_class import BaseLink
 
@@ -27,34 +28,34 @@ class CLogLogLink(BaseLink):
         super().__init__()
         self._eps = eps
 
-    def _link(self, y: np.ndarray) -> np.ndarray:
+    def _link(self, y: tensor) -> tensor:
         """
         Get the link, eta, as a function of y.
 
         Overrides BaseLink._link.
         """
-        return np.log(-np.log(1.0 - y + self._eps))
+        return torch.log(-torch.log(1.0 - y + self._eps))
 
-    def _inverse_link(self, eta: np.ndarray) -> np.ndarray:
+    def _inverse_link(self, eta: tensor) -> tensor:
         """
         Get the target, y, as a function of the link, `eta`.
 
         Overrides BaseLink._inverse_link.
         """
-        return 1.0 - np.exp(-np.exp(eta))
+        return 1.0 - torch.exp(-torch.exp(eta))
 
-    def dydeta(self, y: np.ndarray) -> np.ndarray:
+    def dydeta(self, y: tensor) -> tensor:
         """
         Get the derivative of `y` with respect to the link as a function of y.
 
         Overrides BaseLink.dydeta.
         """
-        return -(1.0 - y) * np.log(1.0 - y + self._eps)
+        return -(1.0 - y) * torch.log(1.0 - y + self._eps)
 
-    def d2ydeta2(self, y: np.ndarray) -> np.ndarray:
+    def d2ydeta2(self, y: tensor) -> tensor:
         """
         Get the second derivative of `y` with respect to the link as a function of y.
 
         Overrides BaseLink.d2ydeta2.
         """
-        return self.dydeta(y) * (1.0 + np.log(1.0 - y + self._eps))
+        return self.dydeta(y) * (1.0 + torch.log(1.0 - y + self._eps))

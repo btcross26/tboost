@@ -4,16 +4,17 @@ Unit tests for single-parameter loss function implementations
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-12-17
+# created: 2023-01-18
 
 
 import logging
 import warnings
 
-import numpy as np
 import pytest
+import torch
+from torch import tensor
 
-from genestboost.utils import d1_central_difference, d2_central_difference
+from tboost.utils import d1_central_difference, d2_central_difference
 
 from .loss_test_list import LOSS_TESTS
 
@@ -46,7 +47,7 @@ class TestLossFunction:
         calculated_values = loss(yt, yp)
 
         # THEN the correct values of error should be returned
-        np.testing.assert_allclose(calculated_values, error, atol=1e-4, rtol=1e-5)
+        torch.testing.assert_close(calculated_values, error, atol=1e-4, rtol=1e-5)
 
     def test_d1_loss(self, test_name, loss, loss_test_values, tol):
         """
@@ -65,7 +66,7 @@ class TestLossFunction:
         # THEN the calculated values of the derivative should be close to the
         # true implemented computed values
         expected_values = loss.dldyp(yt, yp)
-        np.testing.assert_allclose(
+        torch.testing.assert_close(
             calculated_values, expected_values, atol=tol[0], rtol=tol[1]
         )
 
@@ -88,6 +89,6 @@ class TestLossFunction:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             expected_values = loss.d2ldyp2(yt, yp)
-        np.testing.assert_allclose(
+        torch.testing.assert_close(
             calculated_values, expected_values, atol=tol[0], rtol=tol[1]
         )

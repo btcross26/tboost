@@ -7,7 +7,7 @@
 
 from typing import Union
 
-import numpy as np
+from torch import tensor
 
 from .base_class import BaseLink
 
@@ -33,7 +33,7 @@ class PowerLink(BaseLink):
         self.power_ = power
         self.summand_ = summand
 
-    def _link(self, y: np.ndarray) -> np.ndarray:
+    def _link(self, y: tensor) -> tensor:
         """
         Get the link, eta, as a function of y.
 
@@ -41,7 +41,7 @@ class PowerLink(BaseLink):
         """
         return (y + self.summand_) ** self.power_
 
-    def _inverse_link(self, eta: np.ndarray) -> np.ndarray:
+    def _inverse_link(self, eta: tensor) -> tensor:
         """
         Get the target, y, as a function of the link, `eta`.
 
@@ -49,7 +49,7 @@ class PowerLink(BaseLink):
         """
         return eta ** (1.0 / self.power_) - self.summand_
 
-    def dydeta(self, y: np.ndarray) -> np.ndarray:
+    def dydeta(self, y: tensor) -> tensor:
         """
         Get the derivative of `y` with respect to the link as a function of y.
 
@@ -57,7 +57,7 @@ class PowerLink(BaseLink):
         """
         return (1.0 / self.power_) * (y + self.summand_) ** (1.0 - self.power_)
 
-    def d2ydeta2(self, y: np.ndarray) -> np.ndarray:
+    def d2ydeta2(self, y: tensor) -> tensor:
         """
         Get the second derivative of `y` with respect to the link as a function of y.
 

@@ -2,11 +2,12 @@
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-08-26
+# created: 2023-01-18
 
 from typing import Optional
 
-import numpy as np
+import torch
+from torch import tensor
 
 from .base_class import BaseLoss
 
@@ -33,15 +34,15 @@ class StudentTLoss(BaseLoss):
         self.nu_ = dof
         self.scale_ = (dof + 1.0) / 2.0 if scale is None else scale
 
-    def _loss(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def _loss(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the per-observation loss as a function of `yt` and `yp`.
 
         Overrides BaseLoss._loss.
         """
-        return self.scale_ * np.log(1.0 + (yt - yp) ** 2 / self.nu_)
+        return self.scale_ * torch.log(1.0 + (yt - yp) ** 2 / self.nu_)
 
-    def dldyp(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def dldyp(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the first derivative of the loss with respect to `yp`.
 
@@ -49,7 +50,7 @@ class StudentTLoss(BaseLoss):
         """
         return -2.0 * self.scale_ * (yt - yp) / (self.nu_ + (yt - yp) ** 2)
 
-    def d2ldyp2(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def d2ldyp2(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the second derivative of the loss with respect to `yp`.
 

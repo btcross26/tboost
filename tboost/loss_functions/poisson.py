@@ -2,9 +2,10 @@
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-08-26
+# created: 2023-01-18
 
-import numpy as np
+import torch
+from torch import tensor
 
 from .base_class import BaseLoss
 
@@ -12,15 +13,15 @@ from .base_class import BaseLoss
 class PoissonLoss(BaseLoss):
     """Poisson loss function class."""
 
-    def _loss(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def _loss(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the per-observation loss as a function of `yt` and `yp`.
 
         Overrides BaseLoss._loss.
         """
-        return yp - yt * np.log(yp)
+        return yp - yt * torch.log(yp)
 
-    def dldyp(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def dldyp(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the first derivative of the loss with respect to `yp`.
 
@@ -28,10 +29,10 @@ class PoissonLoss(BaseLoss):
         """
         return 1.0 - yt / yp
 
-    def d2ldyp2(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def d2ldyp2(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the second derivative of the loss with respect to `yp`.
 
         Overrides BaseLoss.d2ldyp2.
         """
-        return yt / yp ** 2
+        return yt / yp**2

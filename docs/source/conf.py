@@ -154,7 +154,12 @@ html_static_path = ["_static"]
 
 # sidebar templates
 html_sidebars = {
-    "**": ["about.html", "navigation.html", "relations.html", "searchbox.html",]
+    "**": [
+        "about.html",
+        "navigation.html",
+        "relations.html",
+        "searchbox.html",
+    ]
 }
 
 # -- Extension configuration -------------------------------------------------

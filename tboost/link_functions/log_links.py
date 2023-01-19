@@ -2,10 +2,11 @@
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-08-26
+# created: 2023-01-14
 
 
-import numpy as np
+import torch
+from torch import tensor
 
 from .base_class import BaseLink
 
@@ -28,23 +29,23 @@ class LogLink(BaseLink):
         super().__init__()
         self.summand_ = summand
 
-    def _link(self, y: np.ndarray) -> np.ndarray:
+    def _link(self, y: tensor) -> tensor:
         """
         Get the link, eta, as a function of y.
 
         Overrides BaseLink._link.
         """
-        return np.log(y + self.summand_)
+        return torch.log(y + self.summand_)
 
-    def _inverse_link(self, eta: np.ndarray) -> np.ndarray:
+    def _inverse_link(self, eta: tensor) -> tensor:
         """
         Get the target, y, as a function of the link, `eta`.
 
         Overrides BaseLink._inverse_link.
         """
-        return np.exp(eta) - self.summand_
+        return torch.exp(eta) - self.summand_
 
-    def dydeta(self, y: np.ndarray) -> np.ndarray:
+    def dydeta(self, y: tensor) -> tensor:
         """
         Get the derivative of `y` with respect to the link as a function of y.
 
@@ -52,7 +53,7 @@ class LogLink(BaseLink):
         """
         return y + self.summand_
 
-    def d2ydeta2(self, y: np.ndarray) -> np.ndarray:
+    def d2ydeta2(self, y: tensor) -> tensor:
         """
         Get the second derivative of `y` with respect to the link as a function of y.
 

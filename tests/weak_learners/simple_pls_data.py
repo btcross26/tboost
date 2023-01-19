@@ -12,12 +12,13 @@ array([ 0.97543043,  0.16886885, -0.11959516,  0.62326294,  0.15992299,
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-12-20
+# created: 2023-01-18
 
 
-import numpy as np
+import torch
+from torch import tensor
 
-X = np.array(
+X = tensor(
     [
         [
             0.7497189,
@@ -219,9 +220,10 @@ X = np.array(
             1.07846669,
             -0.31694713,
         ],
-    ]
+    ],
+    dtype=torch.float64,
 )
-y = np.array(
+y = tensor(
     [
         3.87264128,
         19.81146556,
@@ -243,5 +245,6 @@ y = np.array(
         -2.92995876,
         6.41815675,
         14.46934747,
-    ]
+    ],
+    dtype=torch.float64,
 )

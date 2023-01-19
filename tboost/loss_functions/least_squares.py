@@ -2,9 +2,10 @@
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-08-26
+# created: 2023-01-13
 
-import numpy as np
+import torch
+from torch import tensor
 
 from .base_class import BaseLoss
 
@@ -12,7 +13,7 @@ from .base_class import BaseLoss
 class LeastSquaresLoss(BaseLoss):
     """Least squares loss function class."""
 
-    def _loss(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def _loss(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the per-observation loss as a function of `yt` and `yp`.
 
@@ -20,7 +21,7 @@ class LeastSquaresLoss(BaseLoss):
         """
         return 0.5 * (yt - yp) * (yt - yp)
 
-    def dldyp(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def dldyp(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the first derivative of the loss with respect to `yp`.
 
@@ -28,10 +29,10 @@ class LeastSquaresLoss(BaseLoss):
         """
         return yp - yt
 
-    def d2ldyp2(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def d2ldyp2(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the second derivative of the loss with respect to `yp`.
 
         Overrides BaseLoss.d2ldyp2.
         """
-        return np.ones(yp.shape)
+        return torch.ones(*yp.shape, dtype=yp.dtype)

@@ -2,10 +2,11 @@
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2019-08-26
+# created: 2023-01-18
 
 
-import numpy as np
+import torch
+from torch import tensor
 
 from .base_class import BaseLoss
 
@@ -27,15 +28,17 @@ class LogLoss(BaseLoss):
         super().__init__()
         self._eps = eps
 
-    def _loss(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def _loss(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the per-observation loss as a function of `yt` and `yp`.
 
         Overrides BaseLoss._loss.
         """
-        return -yt * np.log(yp + self._eps) - (1.0 - yt) * np.log(1.0 - yp + self._eps)
+        return -yt * torch.log(yp + self._eps) - (1.0 - yt) * torch.log(
+            1.0 - yp + self._eps
+        )
 
-    def dldyp(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def dldyp(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the first derivative of the loss with respect to `yp`.
 
@@ -43,10 +46,10 @@ class LogLoss(BaseLoss):
         """
         return -(yt / (yp + self._eps)) + (1.0 - yt) / (1.0 - yp + self._eps)
 
-    def d2ldyp2(self, yt: np.ndarray, yp: np.ndarray) -> np.ndarray:
+    def d2ldyp2(self, yt: tensor, yp: tensor) -> tensor:
         """
         Calculate the second derivative of the loss with respect to `yp`.
 
         Overrides BaseLoss.d2ldyp2.
         """
-        return (yt / (yp ** 2 + self._eps)) + (1.0 - yt) / ((1.0 - yp) ** 2 + self._eps)
+        return (yt / (yp**2 + self._eps)) + (1.0 - yt) / ((1.0 - yp) ** 2 + self._eps)
