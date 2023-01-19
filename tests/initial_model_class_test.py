@@ -4,7 +4,7 @@ Unit tests for BoostedModel.InitialModel class
 
 # author: Benjamin Cross
 # email: btcross26@yahoo.com
-# created: 2020-04-06
+# created: 2023-01-18
 
 
 import logging
