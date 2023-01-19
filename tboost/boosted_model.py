@@ -372,43 +372,6 @@ class BoostedModel:
             eta_p += lr * model.predict(X[:, : self._msi])
         return eta_p
 
-    def decision_function_single(
-        self,
-        X: tensor,
-        model_index: int = -1,
-        apply_learning_rate: bool = True,
-    ) -> tensor:
-        """
-        Compute the link for a specific ensemble model by index.
-
-        Parameters
-        ----------
-        X: tensor
-            The model matrix. If `init_type` was set as "residuals", then the model
-            scores for which to calculate residuals should form the last column of the
-            input matrix.
-
-        model_index: int (default=-1)
-            The model iteration for which to compute the decision function. By default,
-            it is -1. This corresponds to the model from the most recent boosting
-            iteration.
-
-        apply_learning_rate: bool (default=True)
-            If True, then the predictions from the selected model on `X` will be
-            multiplied by the corresponding learning rate. Otherwise if False, the
-            predictions of the selected model will be returned as if the learning rate
-            was equal to 1.0.
-
-        Returns
-        -------
-        tensor
-            The computed link values for the selected model index.
-        """
-        model, lr = self._model_list[model_index]
-        lr = lr if apply_learning_rate else 1.0
-        eta_p = lr * model.predict(X[:, : self._msi])
-        return eta_p
-
     def fit(
         self,
         X: tensor,
@@ -499,34 +462,6 @@ class BoostedModel:
 
         return self
 
-    def get_model_links(self, X: tensor) -> tensor:
-        """
-        Compute a matrix of model links (without applying learning rates).
-
-        Returns a matrix of model links, where each column index corresponds to the
-        same index in the model ensemble.
-
-        Parameters
-        ----------
-        X: tensor [n_samples, n_features]
-            The model matrix. If `init_type` was set as "residuals", then the model
-            scores for which to calculate residuals should form the last column of the
-            input matrix.
-
-        Returns
-        -------
-        link_matrix: tensor [n_samples, n_boosting_iterations]
-        """
-        model_links = torch.zeros(
-            X.shape[0], len(self._model_list) + 1, dtype=self.dtype
-        )
-        eta_p = self._model_init.predict(X)
-        model_links[:, 0] = eta_p
-        for i, (model, _) in enumerate(self._model_list):
-            eta_p = model.predict(X[:, : self._msi])
-            model_links[:, i + 1] = eta_p
-        return model_links
-
     def get_loss_history(self) -> tensor:
         """
         Get the loss history for the fitted model (training and validation loss).
@@ -611,36 +546,6 @@ class BoostedModel:
         """
         eta_p = self.decision_function(X, model_index)
         return self._link(eta_p, inverse=True)
-
-    def prediction_history(self, X: tensor, links: bool = False) -> tensor:
-        """
-        Compute a prediction history.
-
-        This will compute a matrix of predictions with each column corresponding to the
-        predictions up to the underlying ensemble at that column index.
-
-        Parameters
-        ----------
-        X: tensor
-            The model matrix. If `init_type` was set as "residuals", then the model
-            scores for which to calculate residuals should form the last column of the
-            input matrix.
-
-        links: bool (default=False)
-            If true, then return the links of the prediction history. Otherwise, return
-            the non-transformed predictions.
-        """
-        model_links = self.get_model_links(X)
-        lr_array = torch.hstack([[1], [tup[1] for tup in self._model_list]]).reshape(
-            1, -1
-        )
-        model_links *= lr_array
-        link_history = torch.cumsum(model_links, 1)
-
-        if links is True:
-            return link_history
-
-        return self._link(link_history, inverse=True)
 
     def reset_model(self) -> None:
         """
