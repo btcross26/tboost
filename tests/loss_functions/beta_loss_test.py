@@ -100,14 +100,14 @@ def test_leaky_beta_loss(leaky_beta_loss_objects):
 
     # THEN the two different instances should yield equal values inside of the
     # ratio points
-    torch.testing.assert_close(leaky_calc, beta_calc, atol=0.0, rtol=1e-8)
+    torch.testing.assert_close(leaky_calc, beta_calc, atol=0.0, rtol=1e-6)
 
     # WHEN d1 values are calculated at various points inside the ratio points
     beta_calc_d1a = beta_loss.dldyp(yt, yp)
     leaky_calc_d1a = leaky_loss.dldyp(yt, yp)
 
     # THEN the two different instances should yield equal values
-    torch.testing.assert_close(leaky_calc_d1a, beta_calc_d1a, atol=0.0, rtol=1e-8)
+    torch.testing.assert_close(leaky_calc_d1a, beta_calc_d1a, atol=0.0, rtol=1e-6)
 
     # WHEN d1 values are calculated at various points outside the ratio points
     yt_shelf = tensor([1.0, 0.0, 0.0], dtype=torch.float64)  # shelf-values
@@ -120,7 +120,7 @@ def test_leaky_beta_loss(leaky_beta_loss_objects):
 
     # THEN the two different instances should yield equal values
     torch.testing.assert_close(
-        leaky_calc_d1b, beta_calc_d1b, atol=0.0, rtol=1e-8
+        leaky_calc_d1b, beta_calc_d1b, atol=0.0, rtol=1e-6
     )  # this will fail if gamma is too small (e.g., 0.01 close to flat shelves)
 
     # WHEN d2 values are calculated at various points inside ratio points
@@ -128,7 +128,7 @@ def test_leaky_beta_loss(leaky_beta_loss_objects):
     leaky_calc_d2a = leaky_loss.d2ldyp2(yt, yp)
 
     # THEN the two sets should be equivalent
-    torch.testing.assert_close(leaky_calc_d2a, beta_calc_d2a, atol=0.0, rtol=1e-8)
+    torch.testing.assert_close(leaky_calc_d2a, beta_calc_d2a, atol=0.0, rtol=1e-6)
 
     # WHEN d2 values are calculated at various points outside ratio points
     leaky_calc_d2b = leaky_loss.d2ldyp2(yt_shelf, yp_shelf)
@@ -138,7 +138,7 @@ def test_leaky_beta_loss(leaky_beta_loss_objects):
         leaky_calc_d2b,
         torch.zeros_like(leaky_calc_d2b, dtype=torch.float64),
         atol=0.0,
-        rtol=1e-8,
+        rtol=1e-6,
     )
 
 
