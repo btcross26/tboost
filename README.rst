@@ -6,7 +6,7 @@ Documentation coming soon...
 Installation
 ------------
 
-Create a virtual environment with Python >=3.7,<=3.9, and install from git:
+Create a virtual environment with Python >=3.8,<=3.10, and install from git:
 
 .. code-block::
 
@@ -34,4 +34,4 @@ Consult the `Changelog <https://btcross26.github.io/tboost/build/html/changelog.
 Contributing
 ------------
 
-If you would like to contribute, please fork this repository, create a branch off of :code:`main` for your contribution, and submit a PR to the :code:`dev_staging` branch. Also, please create an issue describing the nature of the contribution if it has not already been done.
+If you would like to contribute, please fork this repository, create a branch off of :code:`main` for your contribution, and submit a PR to the :code:`dev` branch. Also, please create an issue describing the nature of the contribution if it has not already been done.
