@@ -6,7 +6,7 @@
 
 
 import heapq
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple  # noqa: F401
 
 import torch
 from torch import tensor
