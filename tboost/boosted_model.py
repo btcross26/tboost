@@ -6,7 +6,7 @@
 
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 import torch
 from torch import tensor
@@ -147,6 +147,10 @@ class BoostedModel:
             True if the model has been fit, false otherwise.
         """
         return self._is_fit
+
+    def __iter__(self) -> Generator[Tuple[Model, float], None, None]:  # noqa: D105
+        for model in self._model_list:
+            yield model
 
     def boost(
         self,
